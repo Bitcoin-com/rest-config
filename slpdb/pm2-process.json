@@ -1,0 +1,12 @@
+{
+  "apps": [
+      {
+        "name": "app",
+        "script": "npm",
+        "args": "start",
+        "max_restarts": 20,
+        "cwd": "/app/",
+        "restart_delay": 4000
+      }
+  ]
+}

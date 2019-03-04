@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: slpserve-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: slpserve-app
+  serviceName: slpdb-bitserve-svc
+  template:
+    metadata:
+      labels:
+        app: slpserve-app
+    spec:
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: slpserve-nginx-conf
+          items:
+          - key: default
+            path: default
+      containers:
+      - name: slpserve
+        image: spendbch/slpserve:latest
+        ports:
+          - containerPort: 3000
+        env:
+        - name: db_url
+          value: "mongodb://slpdb-svc.default.svc.cluster.local:27017"
+      - name: nginx
+        image: linuxserver/letsencrypt
+        volumeMounts:
+        - mountPath: /config
+          name: slpserve-config-pvc
+        - mountPath: /config/nginx/site-confs
+          name: nginx-conf
+        env:
+        - name: URL
+          value: bchdata.cash
+        - name: SUBDOMAINS
+          value: "slpdb"
+        - name: ONLY_SUBDOMAINS
+          value: "true"
+        - name: validation
+          value: http
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+  volumeClaimTemplates:
+  - metadata:
+      name: slpserve-config-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 1Gi

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wormhole-testnet-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wormhole-testnet-app
+  serviceName: wormhole-testnet-svc
+  template:
+    metadata:
+      labels:
+        app: wormhole-testnet-app
+    spec:
+      volumes:
+      - name: wormhole-testnet-conf
+        configMap:
+          name: wormhole-testnet-conf
+          items:
+          - key: entrypoint.sh
+            path: entrypoint.sh
+            mode: 365
+      containers:
+      - env:
+        - name: BITCOIN_RPC_USER
+          valueFrom:
+            secretKeyRef:
+              key: rpcuser
+              name: bitcoin-secret
+        - name: BITCOIN_RPC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rpcpass
+              name: bitcoin-secret
+        image: zquestz/wormhole
+        imagePullPolicy: Always
+        name: bitcoin
+        ports:
+          - containerPort: 18332
+          - containerPort: 18333
+          - containerPort: 28332
+        command: ["/entrypoint.sh"]
+        args: ["wormholed"]
+        resources:
+          requests:
+            memory: 2Gi
+        volumeMounts:
+        - mountPath: /data
+          name: wormhole-testnet-pvc
+        - mountPath: /entrypoint.sh
+          name: wormhole-testnet-conf
+          subPath: entrypoint.sh
+  volumeClaimTemplates:
+  - metadata:
+      name: wormhole-testnet-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 60Gi

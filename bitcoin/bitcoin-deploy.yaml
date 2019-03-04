@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bitcoin-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bitcoin-app
+  serviceName: bitcoin-svc
+  template:
+    metadata:
+      labels:
+        app: bitcoin-app
+    spec:
+      volumes:
+      - name: bitcoin-conf
+        configMap:
+          name: bitcoin-conf
+          items:
+          - key: entrypoint.sh
+            path: entrypoint.sh
+            mode: 365
+      containers:
+      - env:
+        - name: BITCOIN_RPC_USER
+          valueFrom:
+            secretKeyRef:
+              key: rpcuser
+              name: bitcoin-secret
+        - name: BITCOIN_RPC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rpcpass
+              name: bitcoin-secret
+        image: zquestz/bitcoin-abc
+        imagePullPolicy: Always
+        name: bitcoin
+        ports:
+          - containerPort: 8332
+          - containerPort: 8333
+          - containerPort: 28332
+        command: ["/entrypoint.sh"]
+        args: ["bitcoind"]
+        resources:
+          requests:
+            memory: 3Gi
+        volumeMounts:
+        - mountPath: /data
+          name: bitcoin-pvc
+        - mountPath: /entrypoint.sh
+          name: bitcoin-conf
+          subPath: entrypoint.sh
+  volumeClaimTemplates:
+  - metadata:
+      name: bitcoin-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 220Gi

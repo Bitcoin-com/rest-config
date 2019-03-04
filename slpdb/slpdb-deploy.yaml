@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: slpdb-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: slpdb-app
+  serviceName: slpdb-svc
+  template:
+    metadata:
+      labels:
+        app: slpdb-app
+    spec:
+      containers:
+      - env:
+        - name: rpc_host
+          value: "bitcoin-svc.default.svc.cluster.local"
+        - name: rpc_user
+          valueFrom:
+            secretKeyRef:
+              key: rpcuser
+              name: bitcoin-secret
+        - name: rpc_pass
+          valueFrom:
+            secretKeyRef:
+              key: rpcpass
+              name: bitcoin-secret
+        image: spendbch/slpdb:latest
+        imagePullPolicy: Always
+        name: slpdb
+        ports:
+          - containerPort: 28339
+        volumeMounts:
+        - name: slpdb-state-pvc
+          mountPath: /app/_leveldb
+      - name: mongodb
+        image: mongo:4
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+        - name: slpdb-pvc
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: slpdb-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 20Gi
+  - metadata:
+      name: slpdb-state-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 2Gi

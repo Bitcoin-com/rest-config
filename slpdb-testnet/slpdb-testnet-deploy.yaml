@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: slpdb-testnet-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slpdb-testnet-app
+  serviceName: slpdb-testnet-svc
+  template:
+    metadata:
+      labels:
+        app: slpdb-testnet-app
+    spec:
+      containers:
+      - env:
+        - name: rpc_host
+          value: "bitcoin-testnet-svc.default.svc.cluster.local"
+        - name: rpc_port
+          value: "18332"
+        - name: rpc_user
+          valueFrom:
+            secretKeyRef:
+              key: rpcuser
+              name: bitcoin-secret
+        - name: rpc_pass
+          valueFrom:
+            secretKeyRef:
+              key: rpcpass
+              name: bitcoin-secret
+        image: spendbch/slpdb:latest
+        imagePullPolicy: Always
+        name: slpdb
+        ports:
+          - containerPort: 28339
+        volumeMounts:
+        - name: slpdb-testnet-state-pvc
+          mountPath: /app/_leveldb
+      - name: mongodb
+        image: mongo:4
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+        - name: slpdb-testnet-pvc
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: slpdb-testnet-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 10Gi
+  - metadata:
+      name: slpdb-testnet-state-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 2Gi

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wormhole-svc
+  namespace: default
+  annotations:
+spec:
+  selector:
+    app: wormhole-app
+  ports:
+  - name: rpc
+    port: 8332
+    protocol: TCP
+    targetPort: 8332
+  - name: zmq
+    port: 28332
+    protocol: TCP
+    targetPort: 28332
+  type: ClusterIP
