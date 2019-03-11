@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockbook-svc
+  namespace: default
+spec:
+  selector:
+    app: blockbook-app
+  ports:
+  - name: http1
+    port: 9030
+    protocol: TCP
+    targetPort: 9030
+  - name: http2
+    port: 9130
+    protocol: TCP
+    targetPort: 9130
+  type: LoadBalancer

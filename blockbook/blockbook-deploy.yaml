@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: blockbook-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blockbook-app
+  serviceName: blockbook-svc
+  template:
+    metadata:
+      labels:
+        app: blockbook-app
+    spec:
+      containers:
+      - env:
+        - name: RPC_USER
+          valueFrom:
+            secretKeyRef:
+              key: rpcuser
+              name: bitcoin-secret
+        - name: RPC_PASS
+          valueFrom:
+            secretKeyRef:
+              key: rpcpass
+              name: bitcoin-secret
+        - name: RPC_HOST
+          value: bitcoin-svc.default.svc.cluster.local
+        image: spendbch/blockbook:latest
+        imagePullPolicy: Always
+        name: blockbook
+        ports:
+          - containerPort: 9030
+          - containerPort: 9130
+        resources:
+          requests:
+            memory: 16Gi
+        volumeMounts:
+        - mountPath: /go/src/blockbook/data
+          name: blockbook-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: blockbook-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp2"
+      resources:
+        requests:
+          storage: 285Gi
