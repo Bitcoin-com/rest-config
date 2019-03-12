@@ -7,6 +7,7 @@ RUN npm install typescript -g
 RUN git clone https://github.com/simpleledger/slpdb.git /app
 WORKDIR /app
 RUN npm install
+RUN npm install cashaddrjs-slp
 
 # Ports
 EXPOSE 28332
