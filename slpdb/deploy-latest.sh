@@ -1,8 +1,8 @@
 #!/bin/bash
 
-version=$1
+version=$(openssl rand -hex 12)
 
-echo "Deploying version $version to slpdb and slpdb-testnet"
+echo "Deploying latest to slpdb and slpdb-testnet"
 
 docker build --no-cache -t spendbch/slpdb:latest .
 

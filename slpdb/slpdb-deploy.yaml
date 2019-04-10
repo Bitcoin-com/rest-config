@@ -17,6 +17,8 @@ spec:
       - env:
         - name: rpc_host
           value: "bitcoin-svc.default.svc.cluster.local"
+        - name: zmq_incoming_host
+          value: "bitcoin-svc.default.svc.cluster.local"
         - name: rpc_user
           valueFrom:
             secretKeyRef:
